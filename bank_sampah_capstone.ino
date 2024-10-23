@@ -87,10 +87,10 @@ String currentOwner = "";
 float currentSaldo = 0;
 bool accessGranted = false;
 
-// Variabel penyimpanan data setoran
-float previousWeight = 0;
-float totalWeight = 0;
-float pricePerKg = 0;
+// Variabel penyimpanan berat untuk masing-masing storage
+float previousWeightA = 0, previousWeightB = 0, previousWeightC = 0, previousWeightD = 0;
+float currentWeightA = 0, currentWeightB = 0, currentWeightC = 0, currentWeightD = 0;
+float newWeightA = 0, newWeightB = 0, newWeightC = 0, newWeightD = 0;
 
 // Fungsi Nextion HMI
 NexTouch *nex_listen_list[] = {
@@ -101,16 +101,10 @@ NexTouch *nex_listen_list[] = {
   NULL
 };
 
-void selesaiSetorCallback(void *ptr) {
-  processStorageA(); // Call the function to process storage A when the button is pressed
-  Serial.println("Selesai Setor button pressed, processing storage A");
-}
-
-
 // Fungsi untuk menginisialisasi komponen
 void setup() {
   Serial.begin(115200);
-  nextion.begin(115200, SERIAL_8N1, NEXTION_RX_PIN, NEXTION_TX_PIN); // Nextion
+  nextion.begin(9600, SERIAL_8N1, NEXTION_RX_PIN, NEXTION_TX_PIN); // Nextion
 
   // Inisialisasi WiFi
   WiFi.begin("SSID", "password");
@@ -183,7 +177,6 @@ void loop() {
   }
 }
 
-
 // Fungsi untuk cek kartu RFID
 bool checkRFID() {
   if (!rfid.PICC_IsNewCardPresent()) return false;
@@ -211,77 +204,214 @@ bool checkRFID() {
   return false;
 }
 
-
-// Fungsi untuk memproses penyetoran sampah di storage A (Plastik)
+// Penggantian proses setoran pada fungsi processStorage sesuai subjenis
 void processStorageA() {
-    servoA.write(180);  // Buka penutup (180 derajat)
-    delay(1000);
-    float currentWeight = scaleA.get_units(5);
-    float newWeight = currentWeight - previousWeight;
-    previousWeight = currentWeight;
-    processResult(newWeight);
-    servoA.write(90);  // Tutup penutup (90 derajat)
-  
+    if(detectItems(TRIG_PIN_A, ECHO_PIN_A) > 0){
+      servoA.write(180);  // Buka penutup (180 derajat)
+      delay(1000);
+      currentWeightA = scaleA.get_units(5);
+      newWeightA = currentWeightA - previousWeightA;
+      previousWeightA = currentWeightA;
+      processResultPlastic(newWeightA);  // Panggil fungsi hasil untuk plastik berdasarkan subjenis
+    }
+    
 }
 
-// Fungsi untuk memproses penyetoran sampah di storage B (Kertas)
 void processStorageB() {
-  if (detectItems(TRIG_PIN_B, ECHO_PIN_B) > 0) {
-    servoB.write(180);  // Buka penutup (180 derajat)
-    delay(1000);
-    float currentWeight = scaleB.get_units(5);
-    float newWeight = currentWeight - previousWeight;
-    previousWeight = currentWeight;
-    processResult(newWeight);
-    servoB.write(90);  // Tutup penutup (90 derajat)
-  }
+    if (detectItems(TRIG_PIN_B, ECHO_PIN_B) > 0) {
+        servoB.write(180);  // Buka penutup (180 derajat)
+        delay(1000);
+        currentWeightB = scaleB.get_units(5);
+        newWeightB = currentWeightB - previousWeightB;
+        previousWeightB = currentWeightB;
+        processResultPaper(newWeightB);  // Panggil fungsi hasil untuk kertas berdasarkan subjenis
+    }
 }
 
-// Fungsi untuk memproses penyetoran sampah di storage C (Besi)
 void processStorageC() {
-  if (detectItems(TRIG_PIN_C, ECHO_PIN_C) > 0) {
-    servoC.write(180);  // Buka penutup (180 derajat)
-    delay(1000);
-    float currentWeight = scaleC.get_units(5);
-    float newWeight = currentWeight - previousWeight;
-    previousWeight = currentWeight;
-    processResult(newWeight);
-    servoC.write(90);  // Tutup penutup (90 derajat)
-  }
+    if (detectItems(TRIG_PIN_C, ECHO_PIN_C) > 0) {
+        servoC.write(180);  // Buka penutup (180 derajat)
+        delay(1000);
+        currentWeightC = scaleC.get_units(5);
+        newWeightC = currentWeightC - previousWeightC;
+        previousWeightC = currentWeightC;
+        processResultMetal(newWeightC);  // Panggil fungsi hasil untuk logam berdasarkan subjenis
+    }
 }
 
-// Fungsi untuk memproses penyetoran sampah di storage D (Kaca)
 void processStorageD() {
-  if (detectItems(TRIG_PIN_D, ECHO_PIN_D) > 0) {
-    servoD.write(180);  // Buka penutup (180 derajat)
-    delay(1000);
-    float currentWeight = scaleD.get_units(5);
-    float newWeight = currentWeight - previousWeight;
-    previousWeight = currentWeight;
-    processResult(newWeight);
-    servoD.write(90);  // Tutup penutup (90 derajat)
-  }
+    if (detectItems(TRIG_PIN_D, ECHO_PIN_D) > 0) {
+        servoD.write(180);  // Buka penutup (180 derajat)
+        delay(1000);
+        currentWeightD = scaleD.get_units(5);
+        newWeightD = currentWeightD - previousWeightD;
+        previousWeightD = currentWeightD;
+        processResultGlass(newWeightD);  // Panggil fungsi hasil untuk kaca berdasarkan subjenis
+    }
 }
 
-// Fungsi untuk menghitung total harga dan menampilkan hasil
-void processResult(float newWeight) {
-  float totalPrice = newWeight * pricePerKg;
+// Fungsi untuk memproses hasil setoran berdasarkan subjenis plastik
+void processResultPlastic(float newWeight) {
+    char buffer[100];
+    txtPlasticSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
 
-  // Tampilkan di halaman info setoran
-  char itemBuffer[20], weightBuffer[10], totalBuffer[10];
-  sprintf(itemBuffer, "%s","pastik");
-  sprintf(weightBuffer, "%.2f kg", newWeight);
-  sprintf(totalBuffer, "Rp %.2f", totalPrice);
+    // Tentukan harga per kg berdasarkan subjenis
+    float pricePerKg = 0;
+    if (strcmp(buffer, "pet botol bening") == 0) {
+        pricePerKg = 5500;
+    } else if (strcmp(buffer, "pet botol warna") == 0) {
+        pricePerKg = 1500;
+    } else if (strcmp(buffer, "plastic kemasan") == 0) {
+        pricePerKg = 400;
+    } else if (strcmp(buffer, "tutup botol") == 0) {
+        pricePerKg = 3000;
+    } else {
+        Serial.println("Subjenis plastik tidak ditemukan!");
+        return;  // Jika subjenis tidak valid, hentikan proses
+    }
 
-  txtItem.setText(itemBuffer);
-  txtWeight.setText(weightBuffer);
-  txtTotal.setText(totalBuffer);
+    // Hitung total harga
+    float totalPrice = newWeight * pricePerKg;
 
-  // Update saldo
-  currentSaldo += totalPrice;
+    // Tampilkan hasil di Nextion
+    char itemBuffer[20], weightBuffer[10], totalBuffer[10];
+    sprintf(itemBuffer, "%s", "plastik");
+    sprintf(weightBuffer, "%.2f kg", newWeight);
+    sprintf(totalBuffer, "Rp %.2f", totalPrice);
 
-  pageInfoSetoran.show();
+    txtItem.setText(itemBuffer);
+    txtWeight.setText(weightBuffer);
+    txtTotal.setText(totalBuffer);
+
+    // Update saldo
+    currentSaldo += totalPrice;
+
+    // Pindahkan ke halaman info setoran
+    pageInfoSetoran.show();
 }
+
+// Fungsi untuk memproses hasil setoran berdasarkan subjenis kertas
+void processResultPaper(float newWeight) {
+    char buffer[100];
+    txtPaperSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
+
+    // Tentukan harga per kg berdasarkan subjenis
+    float pricePerKg = 0;
+    if (strcmp(buffer, "arsip") == 0) {
+        pricePerKg = 1800;
+    } else if (strcmp(buffer, "tetra pack") == 0) {
+        pricePerKg = 300;
+    } else if (strcmp(buffer, "kardus") == 0) {
+        pricePerKg = 1600;
+    } else if (strcmp(buffer, "majalah/duplek/karton") == 0) {
+        pricePerKg = 500;
+    } else {
+        Serial.println("Subjenis kertas tidak ditemukan!");
+        return;
+    }
+
+    // Hitung total harga
+    float totalPrice = newWeight * pricePerKg;
+
+    // Tampilkan hasil di Nextion
+    char itemBuffer[20], weightBuffer[10], totalBuffer[10];
+    sprintf(itemBuffer, "%s", "kertas");
+    sprintf(weightBuffer, "%.2f kg", newWeight);
+    sprintf(totalBuffer, "Rp %.2f", totalPrice);
+
+    txtItem.setText(itemBuffer);
+    txtWeight.setText(weightBuffer);
+    txtTotal.setText(totalBuffer);
+
+    // Update saldo
+    currentSaldo += totalPrice;
+
+    // Pindahkan ke halaman info setoran
+    pageInfoSetoran.show();
+}
+
+
+// Fungsi untuk memproses hasil setoran berdasarkan subjenis logam
+void processResultMetal(float newWeight) {
+    char buffer[100];
+    txtMetalSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
+
+    // Tentukan harga per kg berdasarkan subjenis
+    float pricePerKg = 0;
+    if (strcmp(buffer, "seng") == 0) {
+        pricePerKg = 2000;
+    } else if (strcmp(buffer, "besi") == 0) {
+        pricePerKg = 3500;
+    } else if (strcmp(buffer, "aluminium") == 0) {
+        pricePerKg = 10000;
+    } else if (strcmp(buffer, "tembaga") == 0) {
+        pricePerKg = 40000;
+    } else {
+        Serial.println("Subjenis logam tidak ditemukan!");
+        return;
+    }
+
+    // Hitung total harga
+    float totalPrice = newWeight * pricePerKg;
+
+    // Tampilkan hasil di Nextion
+    char itemBuffer[20], weightBuffer[10], totalBuffer[10];
+    sprintf(itemBuffer, "%s", "logam");
+    sprintf(weightBuffer, "%.2f kg", newWeight);
+    sprintf(totalBuffer, "Rp %.2f", totalPrice);
+
+    txtItem.setText(itemBuffer);
+    txtWeight.setText(weightBuffer);
+    txtTotal.setText(totalBuffer);
+
+    // Update saldo
+    currentSaldo += totalPrice;
+
+    // Pindahkan ke halaman info setoran
+    pageInfoSetoran.show();
+}
+
+
+// Fungsi untuk memproses hasil setoran berdasarkan subjenis kaca
+void processResultGlass(float newWeight) {
+    char buffer[100];
+    txtGlassSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
+
+    // Tentukan harga per kg berdasarkan subjenis
+    float pricePerKg = 0;
+    if (strcmp(buffer, "beling") == 0) {
+        pricePerKg = 200;
+    } else if (strcmp(buffer, "botol kecap") == 0) {
+        pricePerKg = 300;
+    } else if (strcmp(buffer, "botol utuh") == 0) {
+        pricePerKg = 400;
+    } else if (strcmp(buffer, "botol hijau") == 0) {
+        pricePerKg = 500;
+    } else {
+        Serial.println("Subjenis kaca tidak ditemukan!");
+        return;
+    }
+
+    // Hitung total harga
+    float totalPrice = newWeight * pricePerKg;
+
+    // Tampilkan hasil di Nextion
+    char itemBuffer[20], weightBuffer[10], totalBuffer[10];
+    sprintf(itemBuffer, "%s", "kaca");
+    sprintf(weightBuffer, "%.2f kg", newWeight);
+    sprintf(totalBuffer, "Rp %.2f", totalPrice);
+
+    txtItem.setText(itemBuffer);
+    txtWeight.setText(weightBuffer);
+    txtTotal.setText(totalBuffer);
+
+    // Update saldo
+    currentSaldo += totalPrice;
+
+    // Pindahkan ke halaman info setoran
+    pageInfoSetoran.show();
+}
+
 
 // Fungsi untuk mendeteksi barang dengan sensor ultrasonik
 int detectItems(int trigPin, int echoPin) {
@@ -298,6 +428,15 @@ int detectItems(int trigPin, int echoPin) {
     return 1;
   }
   return 0;
+}
+
+void selesaiSetorCallback(void *ptr) {
+    // Semua servo kembali ke posisi 90 derajat setelah setoran selesai
+    servoA.write(90);
+    servoB.write(90);
+    servoC.write(90);
+    servoD.write(90);
+    Serial.println("Selesai Setor button pressed, all servos returned to 90 degrees");
 }
 
 // Fungsi untuk mengambil data saldo dari API/database
