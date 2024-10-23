@@ -43,32 +43,101 @@ HardwareSerial nextion(2);
 HX711 scaleA, scaleB, scaleC, scaleD;
 Servo servoA, servoB, servoC, servoD;
 MFRC522 rfid(SS_PIN, RST_PIN);
-NexPage pageLogin = NexPage(0, 0, "login");
-NexPage pageHome = NexPage(1, 0, "home");
-NexPage pageInfoSaldo = NexPage(2, 0, "info_saldo");
-NexPage pageTarikTunai = NexPage(3, 0, "tarik_tunai");
-NexPage pageMutasiRekening = NexPage(4, 0, "mutasi");
-NexPage pageSelectType = NexPage(5, 0, "setor"); // Pilihan jenis sampah
-NexPage pageSelectSubtype = NexPage(6, 0, "detail_setor"); // Pilihan subjenis sampah
-NexPage pageKonfirmSetoran = NexPage(7, 0, "konfirm_setor");
-NexPage pageInfoSetoran = NexPage(8, 0, "info_setor");
-NexPage pageSuccess = NexPage(9, 0, "setor_berhasil");
 
-// Tombol di Laman Home
+/*--------------------------
+  DEKLARASI KOMPONEN NEXTION
+  --------------------------*/
 
-NexText txtSaldo = NexText(2, 2, "t1");
-NexText txtMutasi = NexText(4, 3, "t2");
-NexButton btnKirimTarik = NexButton(3, 3, "b4");
+  NexPage pageLogin = NexPage(0, 0, "login");
+  NexPage pageHome = NexPage(1, 0, "home");
+  NexPage pageInfoSaldo = NexPage(2, 0, "info_saldo");
+  NexPage pageTarikTunai = NexPage(3, 0, "tarik_tunai");
+  NexPage pageKonfirmTarik = NexPage(4, 0, "konfirm_tarik");
+  NexPage pageMutasiRekening = NexPage(5, 0, "mutasi");
+  NexPage pageSelectType = NexPage(6, 0, "setor"); // Pilihan jenis sampah
+  NexPage pageSetorPlastik = NexPage(7, 0, "setor_plastik"); // Pilihan jenis sampah
+  NexPage pageSetorKertas = NexPage(8, 0, "setor_kertas"); // Pilihan jenis sampah
+  NexPage pageSetorLogam = NexPage(9, 0, "setor_logam"); // Pilihan jenis sampah
+  NexPage pageSetorKaca = NexPage(10, 0, "setor_kaca"); // Pilihan jenis sampah
+  NexPage pageKonfirmSetoran = NexPage(11, 0, "konfirm_setor");
+  NexPage pageInfoSetoran = NexPage(12, 0, "info_setor");
+  NexPage pageSuccess = NexPage(13, 0, "setor_berhasil");
 
-NexText txtInputTarik = NexText(3, 7, "n0");
 
-//Tombol Setoran
-NexButton btnSelesaiSetor = NexButton(7, 5, "b4");
+  //Tombol di Page Home
+  NexButton btnInformasiSaldo = NexButton(1, 1, "bo");
+  NexButton btnSetorSampah = NexButton(1, 4, "b3");
+  NexButton btnMutasiRekening = NexButton(1, 2, "b1");
+  NexButton btnTarikTunai = NexButton(1, 3, "b2");
+  NexButton btnStop = NexButton(1, 5, "b4");
 
-// Label untuk informasi setoran
-NexText txtItem = NexText(8, 6, "t3");
-NexText txtWeight = NexText(8, 7, "t4");
-NexText txtTotal = NexText(8, 8, "t5");
+  //Tombol di Page Info Saldo
+  NexText txtInfoSaldo = NexText(2, 2, "t1");
+  NexButton btnKembaliInfoSaldo = NexButton(2, 3, "b4");
+
+  //Tombol di Page Tarik Tunai
+  NexNumber numInputTarik = NexNumber(3,7, "n0" );
+  NexButton btnOkTarik = NexButton(3, 4, "b0");
+  NexText txtStatusTarik = NexText(3,2, "t2" );
+  NexButton btnKonfirmasiTarik = NexButton(3, 3, "b4");
+
+  //Tombol di Page Konfirm Tarik
+  NexButton btnSelesaiTarik = NexButton(4, 3, "b4");
+
+  //Tombol di Page Mutasi
+  NexText txtMutasiRekening = NexText(5,3, "t2" );
+  NexButton btnKembaliMutasiRekening = NexButton(5, 2, "b4");
+
+  //Tombol di Page Setor
+  NexButton btnSetorPlastik = NexButton(6, 2, "b0");
+  NexButton btnSetorKertas = NexButton(6, 5, "b3");
+  NexButton btnSetorLogam = NexButton(6, 3, "b1");
+  NexButton btnSetorKaca = NexButton(6, 4, "b2");
+  NexButton btnKembaliSetor = NexButton(6, 6, "b4");
+
+  //Tombol di Page Setor Plastik
+  NexPicture picBotolBening = NexPicture(7, 4, "p0");
+  NexPicture picBotolWarna = NexPicture(7, 5, "p1");
+  NexPicture picPlastikKemasan = NexPicture(7, 6, "p2");
+  NexPicture picTutupBotol = NexPicture(7, 7, "p3");
+  NexButton btnKembaliSetorPlastik = NexButton(7, 3, "b4");
+
+  //Tombol di Page Setor Kertas
+  NexPicture picArsip = NexPicture(8, 4, "p0");
+  NexPicture picTettraPack = NexPicture(8, 5, "p1");
+  NexPicture picKardus = NexPicture(8, 6, "p2");
+  NexPicture picMajalah = NexPicture(8, 7, "p3");
+  NexButton btnKembalSetorKertas = NexButton(8, 3, "b4");
+
+  //Tombol di Page Setor Logam
+  NexPicture picSeng = NexPicture(9, 4, "p0");
+  NexPicture picBesi = NexPicture(9, 5, "p1");
+  NexPicture picAluminium = NexPicture(9, 6, "p2");
+  NexPicture picTembaga = NexPicture(9, 7, "p3");
+  NexButton btnKembaliSetorLogam = NexButton(9, 3, "b4");
+
+  //Tombol di Page Setor Kaca
+  NexPicture picBeling = NexPicture(10, 4, "p0");
+  NexPicture picBotolKecap = NexPicture(10, 5, "p1");
+  NexPicture picBotolUtuh = NexPicture(10, 6, "p2");
+  NexPicture picBotolHijau = NexPicture(10, 7, "p3");
+  NexButton btnKembaliSetorKaca = NexButton(10, 3, "b4");
+
+  //Tombol di Page Konfirm Setor
+  NexButton btnSelesaiSetor = NexButton(11, 5, "b4");
+
+  //Tombol di Page Info Setor
+  NexText txtItem = NexText(12, 6, "t3");
+  NexText txtWeight = NexText(12, 7, "t4");
+  NexText txtTotal = NexText(12, 8, "t5");
+
+  //Tombol di Page Setor Berhasil
+  NexText txtSaldo = NexText(13, 9, "t4");
+  NexButton btnTidak = NexButton(13, 8, "b0");
+  NexButton btnYa = NexButton(13, 7, "b4");
+
+
+
 
 // Daftar kartu RFID yang diizinkan dan saldo masing-masing
 struct Card {
@@ -95,11 +164,75 @@ float newWeightA = 0, newWeightB = 0, newWeightC = 0, newWeightD = 0;
 // Fungsi Nextion HMI
 NexTouch *nex_listen_list[] = {
   
-  &btnKirimTarik,
-  &btnSelesaiSetor,
+  // Tombol di Page Home
+    &btnInformasiSaldo,
+    &btnSetorSampah,
+    &btnMutasiRekening,
+    &btnTarikTunai,
+    &btnStop,
+
+  // Tombol di Page Info Saldo
+    &btnKembaliInfoSaldo,
+
+  // Tombol di Page Tarik Tunai
+    &btnOkTarik,
+    &btnKonfirmasiTarik,
+
+  // Tombol di Page Selesai Tarik
+    &btnSelesaiTarik,
+
+  // Tombol di Page Mutasi
+    &btnKembaliMutasiRekening,
+
+  // Tombol di Page Setor
+    &btnSetorPlastik,
+    &btnSetorKertas,
+    &btnSetorLogam,
+    &btnSetorKaca,
+    &btnKembaliSetor,
+
+  // Tombol dan Gambar di Page Setor Plastik
+    &picBotolBening,
+    &picBotolWarna,
+    &picPlastikKemasan,
+    &picTutupBotol,
+    &btnKembaliSetorPlastik,
+
+  // Tombol dan Gambar di Page Setor Kertas
+    &picArsip,
+    &picTettraPack,
+    &picKardus,
+    &picMajalah,
+    &btnKembalSetorKertas,
+
+  // Tombol dan Gambar di Page Setor Logam
+    &picSeng,
+    &picBesi,
+    &picAluminium,
+    &picTembaga,
+    &btnKembaliSetorLogam,
+
+  // Tombol dan Gambar di Page Setor Kaca
+    &picBeling,
+    &picBotolKecap,
+    &picBotolUtuh,
+    &picBotolHijau,
+    &btnKembaliSetorKaca,
+
+  // Tombol di Page Konfirm Setor
+    &btnSelesaiSetor,
+  
+  // Tombol di Page Setor Berhasil
+    &btnTidak,
+    &btnYa,
   
   NULL
 };
+
+
+/*-----------
+  VOID SETUP
+------------*/
 
 // Fungsi untuk menginisialisasi komponen
 void setup() {
@@ -139,6 +272,11 @@ void setup() {
   scaleC.set_scale(2280.f);
   scaleD.set_scale(2280.f);
 
+  scaleA.set_rate(80); // 80 Hz (sampling time)
+  scaleB.set_rate(80);
+  scaleC.set_rate(80);
+  scaleD.set_rate(80);
+
   scaleA.tare();
   scaleB.tare();
   scaleC.tare();
@@ -154,16 +292,70 @@ void setup() {
   pinMode(TRIG_PIN_D, OUTPUT);
   pinMode(ECHO_PIN_D, INPUT);
 
-  // Register button for event listening
-  btnSelesaiSetor.attachPop(selesaiSetorCallback, &btnSelesaiSetor);
-
   // Inisialisasi Nextion
   nexInit();
 
+  /*------------------------------------
+    PER EVENT LISTENING AN (attachPush) 
+  -------------------------------------*/
+
+  // Hubungkan tombol dan gambar dengan callback menggunakan attachPush (Touch Press Event)
+    btnInformasiSaldo.attachPush(informasiSaldoCallback, &btnInformasiSaldo);
+    btnSetorSampah.attachPush(setorSampahCallback, &btnSetorSampah);
+    btnMutasiRekening.attachPush(mutasiRekeningCallback, &btnMutasiRekening);
+    btnTarikTunai.attachPush(tarikTunaiCallback, &btnTarikTunai);
+    btnStop.attachPush(stopCallback, &btnStop);
+
+    btnKembaliInfoSaldo.attachPush(kembaliInfoSaldoCallback, &btnKembaliInfoSaldo);
+    btnOkTarik.attachPush(okTarikCallback, &btnOkTarik);
+    btnKonfirmasiTarik.attachPush(konfirmasiTarikCallback, &btnKonfirmasiTarik);
+    btnSelesaiTarik.attachPush(selesaiTarikCallback, &btnSelesaiTarik);
+    btnKembaliMutasiRekening.attachPush(kembaliMutasiRekeningCallback, &btnKembaliMutasiRekening);
+
+    btnSetorPlastik.attachPush(setorPlastikCallback, &btnSetorPlastik);
+    btnSetorKertas.attachPush(setorKertasCallback, &btnSetorKertas);
+    btnSetorLogam.attachPush(setorLogamCallback, &btnSetorLogam);
+    btnSetorKaca.attachPush(setorKacaCallback, &btnSetorKaca);
+    btnKembaliSetor.attachPush(kembaliSetorCallback, &btnKembaliSetor);
+
+    picBotolBening.attachPush(botolBeningCallback, &picBotolBening);
+    picBotolWarna.attachPush(botolWarnaCallback, &picBotolWarna);
+    picPlastikKemasan.attachPush(plastikKemasanCallback, &picPlastikKemasan);
+    picTutupBotol.attachPush(tutupBotolCallback, &picTutupBotol);
+    btnKembaliSetorPlastik.attachPush(kembaliSetorPlastikCallback, &btnKembaliSetorPlastik);
+
+    picArsip.attachPush(botolBeningCallback, &picArsip);
+    picTettraPack.attachPush(botolWarnaCallback, &picTettraPack);
+    picKardus.attachPush(plastikKemasanCallback, &picKardus);
+    picMajalah.attachPush(tutupBotolCallback, &picMajalah);
+    btnKembalSetorKertas.attachPush(kembaliSetorKertasCallback, &btnKembalSetorKertas);
+
+    picSeng.attachPush(botolBeningCallback, &picSeng);
+    picBesi.attachPush(botolWarnaCallback, &picBesi);
+    picAluminium.attachPush(plastikKemasanCallback, &picAluminium);
+    picTembaga.attachPush(tutupBotolCallback, &picTembaga);
+    btnKembaliSetorLogam.attachPush(kembaliSetorLogamCallback, &btnKembaliSetorLogam);
+
+    picBeling.attachPush(botolBeningCallback, &picBeling);
+    picBotolKecap.attachPush(botolWarnaCallback, &picBotolKecap);
+    picBotolUtuh.attachPush(plastikKemasanCallback, &picBotolUtuh);
+    picBotolHijau.attachPush(tutupBotolCallback, &picBotolHijau);
+    btnKembaliSetorKaca.attachPush(kembaliSetorKacaCallback, &btnKembaliSetorKaca);
+
+    btnSelesaiSetor.attachPush(selesaiSetorCallback, &btnSelesaiSetor);
+    btnTidak.attachPush(tidakCallback, &btnTidak);
+    btnYa.attachPush(yaCallback, &btnYa);
+
   // Tampilkan halaman login awal
   pageLogin.show();
-  processResult(50);
 }
+
+
+
+
+/*----------
+  VOID LOOP
+-----------*/
 
 void loop() {
   nexLoop(nex_listen_list);
@@ -176,6 +368,12 @@ void loop() {
     }
   }
 }
+
+
+
+
+
+
 
 // Fungsi untuk cek kartu RFID
 bool checkRFID() {
@@ -209,7 +407,7 @@ void processStorageA() {
     if(detectItems(TRIG_PIN_A, ECHO_PIN_A) > 0){
       servoA.write(180);  // Buka penutup (180 derajat)
       delay(1000);
-      currentWeightA = scaleA.get_units(5);
+      currentWeightA = scaleA.get_units(10);
       newWeightA = currentWeightA - previousWeightA;
       previousWeightA = currentWeightA;
       processResultPlastic(newWeightA);  // Panggil fungsi hasil untuk plastik berdasarkan subjenis
@@ -221,7 +419,7 @@ void processStorageB() {
     if (detectItems(TRIG_PIN_B, ECHO_PIN_B) > 0) {
         servoB.write(180);  // Buka penutup (180 derajat)
         delay(1000);
-        currentWeightB = scaleB.get_units(5);
+        currentWeightB = scaleB.get_units(10);
         newWeightB = currentWeightB - previousWeightB;
         previousWeightB = currentWeightB;
         processResultPaper(newWeightB);  // Panggil fungsi hasil untuk kertas berdasarkan subjenis
@@ -232,7 +430,7 @@ void processStorageC() {
     if (detectItems(TRIG_PIN_C, ECHO_PIN_C) > 0) {
         servoC.write(180);  // Buka penutup (180 derajat)
         delay(1000);
-        currentWeightC = scaleC.get_units(5);
+        currentWeightC = scaleC.get_units(10);
         newWeightC = currentWeightC - previousWeightC;
         previousWeightC = currentWeightC;
         processResultMetal(newWeightC);  // Panggil fungsi hasil untuk logam berdasarkan subjenis
@@ -243,7 +441,7 @@ void processStorageD() {
     if (detectItems(TRIG_PIN_D, ECHO_PIN_D) > 0) {
         servoD.write(180);  // Buka penutup (180 derajat)
         delay(1000);
-        currentWeightD = scaleD.get_units(5);
+        currentWeightD = scaleD.get_units(10);
         newWeightD = currentWeightD - previousWeightD;
         previousWeightD = currentWeightD;
         processResultGlass(newWeightD);  // Panggil fungsi hasil untuk kaca berdasarkan subjenis
@@ -430,6 +628,39 @@ int detectItems(int trigPin, int echoPin) {
   return 0;
 }
 
+
+
+
+
+/* --------------------
+  PER CALL BACK AN
+----------------------*/
+
+// Callback untuk tombol plastik
+void setorPlastikCallback(void *ptr) {
+    Serial.println("Tombol Setor Plastik Ditekan");
+    processStorageA();  // Panggil fungsi penyetoran untuk plastik
+}
+
+// Callback untuk tombol kertas
+void setorKertasCallback(void *ptr) {
+    Serial.println("Tombol Setor Kertas Ditekan");
+    processStorageB();  // Panggil fungsi penyetoran untuk kertas
+}
+
+// Callback untuk tombol logam
+void setorLogamCallback(void *ptr) {
+    Serial.println("Tombol Setor Logam Ditekan");
+    processStorageC();  // Panggil fungsi penyetoran untuk logam
+}
+
+// Callback untuk tombol kaca
+void setorKacaCallback(void *ptr) {
+    Serial.println("Tombol Setor Kaca Ditekan");
+    processStorageD();  // Panggil fungsi penyetoran untuk kaca
+}
+
+// Callback Selesai Setor untuk Tombol Selesai
 void selesaiSetorCallback(void *ptr) {
     // Semua servo kembali ke posisi 90 derajat setelah setoran selesai
     servoA.write(90);
@@ -438,6 +669,134 @@ void selesaiSetorCallback(void *ptr) {
     servoD.write(90);
     Serial.println("Selesai Setor button pressed, all servos returned to 90 degrees");
 }
+
+// Fungsi yang dipanggil ketika tombol "Info Saldo" ditekan
+void informasiSaldoCallback(void *ptr) {
+    Serial.println("Tombol Informasi Saldo Ditekan");
+    showSaldo();
+    // Aksi untuk informasi saldo
+}
+
+// Fungsi yang dipanggil ketika tombol "Tarik Tunai" ditekan
+void tarikTunaiCallback(void *ptr) {
+    Serial.println("Tombol Tarik Tunai Ditekan");
+    pageTarikTunai.show();
+    // Aksi untuk tarik tunai
+}
+
+// Fungsi yang dipanggil ketika tombol "Mutasi Rekening" ditekan
+void mutasiRekeningCallback(void *ptr) {
+    Serial.println("Tombol Mutasi Rekening Ditekan");
+    showMutasiRekening();
+    // Aksi untuk mutasi rekening
+}
+
+// Fungsi yang dipanggil ketika tombol "Kirim Tarik Tunai" ditekan (BARU INI YANG GW GANTI)
+void konfirmasiTarikCallback(void *ptr) {
+    Serial.println("Tombol Konfirmasi Tarik Ditekan");
+    processTarikTunai();
+    // Aksi untuk konfirmasi tarik tunai
+
+
+// belum diedit
+
+void stopCallback(void *ptr) {
+    Serial.println("Tombol Stop Ditekan");
+    // Aksi untuk stop
+}
+
+void kembaliInfoSaldoCallback(void *ptr) {
+    Serial.println("Tombol Kembali Info Saldo Ditekan");
+    // Aksi untuk kembali dari info saldo
+}
+
+void okTarikCallback(void *ptr) {
+    Serial.println("Tombol OK Tarik Ditekan");
+    // Aksi untuk konfirmasi tarik
+}
+
+void selesaiTarikCallback(void *ptr) {
+    Serial.println("Tombol Selesai Tarik Ditekan");
+    // Aksi untuk selesai tarik tunai
+}
+
+void kembaliMutasiRekeningCallback(void *ptr) {
+    Serial.println("Tombol Kembali Mutasi Rekening Ditekan");
+    // Aksi untuk kembali dari mutasi rekening
+}
+
+void kembaliSetorCallback(void *ptr) {
+    Serial.println("Tombol Kembali Setor Ditekan");
+    // Aksi untuk kembali dari setoran sampah
+}
+
+
+
+void botolBeningCallback(void *ptr) {
+    Serial.println("Gambar Botol Bening Ditekan");
+    // Aksi untuk botol bening
+}
+
+void botolWarnaCallback(void *ptr) {
+    Serial.println("Gambar Botol Warna Ditekan");
+    // Aksi untuk botol warna
+}
+
+void plastikKemasanCallback(void *ptr) {
+    Serial.println("Gambar Plastik Kemasan Ditekan");
+    // Aksi untuk plastik kemasan
+}
+
+void tutupBotolCallback(void *ptr) {
+    Serial.println("Gambar Tutup Botol Ditekan");
+    // Aksi untuk tutup botol
+}
+
+void kembaliSetorPlastikCallback(void *ptr) {
+    Serial.println("Tombol Kembali Setor Plastik Ditekan");
+    // Aksi untuk kembali dari setor plastik
+}
+
+void kembaliSetorKertasCallback(void *ptr) {
+    Serial.println("Tombol Kembali Setor Kertas Ditekan");
+    // Aksi untuk kembali dari setor kertas
+}
+
+void kembaliSetorLogamCallback(void *ptr) {
+    Serial.println("Tombol Kembali Setor Logam Ditekan");
+    // Aksi untuk kembali dari setor logam
+}
+
+void kembaliSetorKacaCallback(void *ptr) {
+    Serial.println("Tombol Kembali Setor Kaca Ditekan");
+    // Aksi untuk kembali dari setor kaca
+}
+
+void selesaiSetorCallback(void *ptr) {
+    Serial.println("Tombol Selesai Setor Ditekan");
+    // Aksi untuk selesai setoran
+}
+
+void tidakCallback(void *ptr) {
+    Serial.println("Tombol Tidak Ditekan");
+    // Aksi untuk tidak
+}
+
+void yaCallback(void *ptr) {
+    Serial.println("Tombol Ya Ditekan");
+    // Aksi untuk ya
+}
+
+
+
+
+
+
+
+
+
+
+
 
 // Fungsi untuk mengambil data saldo dari API/database
 void showSaldo() {
@@ -601,25 +960,5 @@ void showMutasiRekening() {
 
   // Pindah ke halaman mutasi rekening di HMI
   pageMutasiRekening.show();
-}
-
-// Fungsi yang dipanggil ketika tombol "Info Saldo" ditekan
-void infoSaldo(void *ptr) {
-  showSaldo();
-}
-
-// Fungsi yang dipanggil ketika tombol "Tarik Tunai" ditekan
-void tarikTunai(void *ptr) {
-  pageTarikTunai.show();
-}
-
-// Fungsi yang dipanggil ketika tombol "Mutasi Rekening" ditekan
-void mutasiRekening(void *ptr) {
-  showMutasiRekening();
-}
-
-// Fungsi yang dipanggil ketika tombol "Kirim Tarik Tunai" ditekan
-void kirimTarik(void *ptr) {
-  processTarikTunai();
 }
 
