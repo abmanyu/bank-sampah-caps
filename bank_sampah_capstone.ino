@@ -85,7 +85,7 @@ MFRC522 rfid(SS_PIN, RST_PIN);
   NexButton btnSelesaiTarik = NexButton(4, 3, "b4");
 
   //Tombol di Page Mutasi
-  NexText txtMutasiRekening = NexText(5,3, "t2" );
+  NexText txtMutasiRekening = NexText(5, 3, "t2" );
   NexButton btnKembaliMutasiRekening = NexButton(5, 2, "b4");
 
   //Tombol di Page Setor
@@ -101,6 +101,11 @@ MFRC522 rfid(SS_PIN, RST_PIN);
   NexPicture picPlastikKemasan = NexPicture(7, 6, "p2");
   NexPicture picTutupBotol = NexPicture(7, 7, "p3");
   NexButton btnKembaliSetorPlastik = NexButton(7, 3, "b4");
+  //Text nya
+  NexText txtBotolBening = NexText(7, 8, "t2");
+  NexText txtBotolWarna = NexText(7, 10, "t4");
+  NexText txtPlastikKemasan = NexText(7, 12, "t6");
+  NexText txtTutupBotol = NexText(7, 14, "t8");
 
   //Tombol di Page Setor Kertas
   NexPicture picArsip = NexPicture(8, 4, "p0");
@@ -108,6 +113,11 @@ MFRC522 rfid(SS_PIN, RST_PIN);
   NexPicture picKardus = NexPicture(8, 6, "p2");
   NexPicture picMajalah = NexPicture(8, 7, "p3");
   NexButton btnKembalSetorKertas = NexButton(8, 3, "b4");
+  //Text nya
+  NexText txtArsip = NexText(8, 8, "t2");
+  NexText txtTettraPack = NexText(8, 10, "t4");
+  NexText txtKardus = NexText(8, 12, "t6");
+  NexText txtMajalah = NexText(8, 14, "t8");
 
   //Tombol di Page Setor Logam
   NexPicture picSeng = NexPicture(9, 4, "p0");
@@ -115,6 +125,11 @@ MFRC522 rfid(SS_PIN, RST_PIN);
   NexPicture picAluminium = NexPicture(9, 6, "p2");
   NexPicture picTembaga = NexPicture(9, 7, "p3");
   NexButton btnKembaliSetorLogam = NexButton(9, 3, "b4");
+  //Text nya
+  NexText txtSeng = NexText(9, 8, "t2");
+  NexText txtBesi = NexText(9, 10, "t4");
+  NexText txtAluminium = NexText(9, 12, "t6");
+  NexText txtTembaga = NexText(9, 14, "t8");
 
   //Tombol di Page Setor Kaca
   NexPicture picBeling = NexPicture(10, 4, "p0");
@@ -122,6 +137,11 @@ MFRC522 rfid(SS_PIN, RST_PIN);
   NexPicture picBotolUtuh = NexPicture(10, 6, "p2");
   NexPicture picBotolHijau = NexPicture(10, 7, "p3");
   NexButton btnKembaliSetorKaca = NexButton(10, 3, "b4");
+  //Text nya
+  NexText txtBeling = NexText(10, 8, "t2");
+  NexText txtBotolKecap = NexText(10, 10, "t4");
+  NexText txtBotolUtuh = NexText(10, 12, "t6");
+  NexText txtBotolHijau = NexText(10, 14, "t8");
 
   //Tombol di Page Konfirm Setor
   NexButton btnSelesaiSetor = NexButton(11, 5, "b4");
@@ -240,7 +260,7 @@ void setup() {
   nextion.begin(9600, SERIAL_8N1, NEXTION_RX_PIN, NEXTION_TX_PIN); // Nextion
 
   // Inisialisasi WiFi
-  WiFi.begin("SSID", "password");
+  WiFi.begin("ysl", "zzzzzzzz");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting to WiFi...");
@@ -271,11 +291,6 @@ void setup() {
   scaleB.set_scale(2280.f);
   scaleC.set_scale(2280.f);
   scaleD.set_scale(2280.f);
-
-  scaleA.set_rate(80); // 80 Hz (sampling time)
-  scaleB.set_rate(80);
-  scaleC.set_rate(80);
-  scaleD.set_rate(80);
 
   scaleA.tare();
   scaleB.tare();
@@ -318,28 +333,32 @@ void setup() {
     btnSetorKaca.attachPush(setorKacaCallback, &btnSetorKaca);
     btnKembaliSetor.attachPush(kembaliSetorCallback, &btnKembaliSetor);
 
+    // Page Setor Plastik
     picBotolBening.attachPush(botolBeningCallback, &picBotolBening);
     picBotolWarna.attachPush(botolWarnaCallback, &picBotolWarna);
     picPlastikKemasan.attachPush(plastikKemasanCallback, &picPlastikKemasan);
     picTutupBotol.attachPush(tutupBotolCallback, &picTutupBotol);
     btnKembaliSetorPlastik.attachPush(kembaliSetorPlastikCallback, &btnKembaliSetorPlastik);
 
-    picArsip.attachPush(botolBeningCallback, &picArsip);
-    picTettraPack.attachPush(botolWarnaCallback, &picTettraPack);
-    picKardus.attachPush(plastikKemasanCallback, &picKardus);
-    picMajalah.attachPush(tutupBotolCallback, &picMajalah);
+    // Page Setor Kertas
+    picArsip.attachPush(arsipCallback, &picArsip);  // Menggunakan callback arsipCallback
+    picTettraPack.attachPush(tettraPackCallback, &picTettraPack);  // Menggunakan callback tettraPackCallback
+    picKardus.attachPush(kardusCallback, &picKardus);  // Menggunakan callback kardusCallback
+    picMajalah.attachPush(majalahCallback, &picMajalah);  // Menggunakan callback majalahCallback
     btnKembalSetorKertas.attachPush(kembaliSetorKertasCallback, &btnKembalSetorKertas);
 
-    picSeng.attachPush(botolBeningCallback, &picSeng);
-    picBesi.attachPush(botolWarnaCallback, &picBesi);
-    picAluminium.attachPush(plastikKemasanCallback, &picAluminium);
-    picTembaga.attachPush(tutupBotolCallback, &picTembaga);
+    // Page Setor Logam
+    picSeng.attachPush(sengCallback, &picSeng);  // Menggunakan callback sengCallback
+    picBesi.attachPush(besiCallback, &picBesi);  // Menggunakan callback besiCallback
+    picAluminium.attachPush(aluminiumCallback, &picAluminium);  // Menggunakan callback aluminiumCallback
+    picTembaga.attachPush(tembagaCallback, &picTembaga);  // Menggunakan callback tembagaCallback
     btnKembaliSetorLogam.attachPush(kembaliSetorLogamCallback, &btnKembaliSetorLogam);
 
-    picBeling.attachPush(botolBeningCallback, &picBeling);
-    picBotolKecap.attachPush(botolWarnaCallback, &picBotolKecap);
-    picBotolUtuh.attachPush(plastikKemasanCallback, &picBotolUtuh);
-    picBotolHijau.attachPush(tutupBotolCallback, &picBotolHijau);
+    // Page Setor Kaca
+    picBeling.attachPush(belingCallback, &picBeling);  // Menggunakan callback belingCallback
+    picBotolKecap.attachPush(botolKecapCallback, &picBotolKecap);  // Menggunakan callback botolKecapCallback
+    picBotolUtuh.attachPush(botolUtuhCallback, &picBotolUtuh);  // Menggunakan callback botolUtuhCallback
+    picBotolHijau.attachPush(botolHijauCallback, &picBotolHijau);  // Menggunakan callback botolHijauCallback
     btnKembaliSetorKaca.attachPush(kembaliSetorKacaCallback, &btnKembaliSetorKaca);
 
     btnSelesaiSetor.attachPush(selesaiSetorCallback, &btnSelesaiSetor);
@@ -402,109 +421,72 @@ bool checkRFID() {
   return false;
 }
 
+/*----------------
+  PROCESS STORAGE
+-----------------*/
 // Penggantian proses setoran pada fungsi processStorage sesuai subjenis
-void processStorageA() {
+void processStorageA(char *subtype) {
     if(detectItems(TRIG_PIN_A, ECHO_PIN_A) > 0){
       servoA.write(180);  // Buka penutup (180 derajat)
       delay(1000);
       currentWeightA = scaleA.get_units(10);
       newWeightA = currentWeightA - previousWeightA;
       previousWeightA = currentWeightA;
-      processResultPlastic(newWeightA);  // Panggil fungsi hasil untuk plastik berdasarkan subjenis
+      processResultPlastic(newWeightA, subtype);  // Panggil fungsi hasil untuk plastik berdasarkan subjenis
     }
     
 }
 
-void processStorageB() {
+void processStorageB(char *subtype) {
     if (detectItems(TRIG_PIN_B, ECHO_PIN_B) > 0) {
         servoB.write(180);  // Buka penutup (180 derajat)
         delay(1000);
         currentWeightB = scaleB.get_units(10);
         newWeightB = currentWeightB - previousWeightB;
         previousWeightB = currentWeightB;
-        processResultPaper(newWeightB);  // Panggil fungsi hasil untuk kertas berdasarkan subjenis
+        processResultPaper(newWeightB, subtype);  // Panggil fungsi hasil untuk kertas berdasarkan subjenis
     }
 }
 
-void processStorageC() {
+void processStorageC(char *subtype) {
     if (detectItems(TRIG_PIN_C, ECHO_PIN_C) > 0) {
         servoC.write(180);  // Buka penutup (180 derajat)
         delay(1000);
         currentWeightC = scaleC.get_units(10);
         newWeightC = currentWeightC - previousWeightC;
         previousWeightC = currentWeightC;
-        processResultMetal(newWeightC);  // Panggil fungsi hasil untuk logam berdasarkan subjenis
+        processResultMetal(newWeightC, subtype);  // Panggil fungsi hasil untuk logam berdasarkan subjenis
     }
 }
 
-void processStorageD() {
+void processStorageD(char *subtype) {
     if (detectItems(TRIG_PIN_D, ECHO_PIN_D) > 0) {
         servoD.write(180);  // Buka penutup (180 derajat)
         delay(1000);
         currentWeightD = scaleD.get_units(10);
         newWeightD = currentWeightD - previousWeightD;
         previousWeightD = currentWeightD;
-        processResultGlass(newWeightD);  // Panggil fungsi hasil untuk kaca berdasarkan subjenis
+        processResultGlass(newWeightD, subtype);  // Panggil fungsi hasil untuk kaca berdasarkan subjenis
     }
 }
 
+/*---------------
+  PROCESS RESULT
+---------------*/
 // Fungsi untuk memproses hasil setoran berdasarkan subjenis plastik
-void processResultPlastic(float newWeight) {
-    char buffer[100];
-    txtPlasticSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
-
-    // Tentukan harga per kg berdasarkan subjenis
+void processResultPlastic(float newWeight, char *subtype) {
     float pricePerKg = 0;
-    if (strcmp(buffer, "pet botol bening") == 0) {
+
+    if (strcmp(subtype, "PET Botol Bening") == 0) {
         pricePerKg = 5500;
-    } else if (strcmp(buffer, "pet botol warna") == 0) {
+    } else if (strcmp(subtype, "PET Botol Warna") == 0) {
         pricePerKg = 1500;
-    } else if (strcmp(buffer, "plastic kemasan") == 0) {
+    } else if (strcmp(subtype, "Plastic Kemasan") == 0) {
         pricePerKg = 400;
-    } else if (strcmp(buffer, "tutup botol") == 0) {
+    } else if (strcmp(subtype, "Tutup Botol") == 0) {
         pricePerKg = 3000;
     } else {
         Serial.println("Subjenis plastik tidak ditemukan!");
-        return;  // Jika subjenis tidak valid, hentikan proses
-    }
-
-    // Hitung total harga
-    float totalPrice = newWeight * pricePerKg;
-
-    // Tampilkan hasil di Nextion
-    char itemBuffer[20], weightBuffer[10], totalBuffer[10];
-    sprintf(itemBuffer, "%s", "plastik");
-    sprintf(weightBuffer, "%.2f kg", newWeight);
-    sprintf(totalBuffer, "Rp %.2f", totalPrice);
-
-    txtItem.setText(itemBuffer);
-    txtWeight.setText(weightBuffer);
-    txtTotal.setText(totalBuffer);
-
-    // Update saldo
-    currentSaldo += totalPrice;
-
-    // Pindahkan ke halaman info setoran
-    pageInfoSetoran.show();
-}
-
-// Fungsi untuk memproses hasil setoran berdasarkan subjenis kertas
-void processResultPaper(float newWeight) {
-    char buffer[100];
-    txtPaperSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
-
-    // Tentukan harga per kg berdasarkan subjenis
-    float pricePerKg = 0;
-    if (strcmp(buffer, "arsip") == 0) {
-        pricePerKg = 1800;
-    } else if (strcmp(buffer, "tetra pack") == 0) {
-        pricePerKg = 300;
-    } else if (strcmp(buffer, "kardus") == 0) {
-        pricePerKg = 1600;
-    } else if (strcmp(buffer, "majalah/duplek/karton") == 0) {
-        pricePerKg = 500;
-    } else {
-        Serial.println("Subjenis kertas tidak ditemukan!");
         return;
     }
 
@@ -513,7 +495,7 @@ void processResultPaper(float newWeight) {
 
     // Tampilkan hasil di Nextion
     char itemBuffer[20], weightBuffer[10], totalBuffer[10];
-    sprintf(itemBuffer, "%s", "kertas");
+    sprintf(itemBuffer, "%s", subtype);
     sprintf(weightBuffer, "%.2f kg", newWeight);
     sprintf(totalBuffer, "Rp %.2f", totalPrice);
 
@@ -529,20 +511,49 @@ void processResultPaper(float newWeight) {
 }
 
 
-// Fungsi untuk memproses hasil setoran berdasarkan subjenis logam
-void processResultMetal(float newWeight) {
-    char buffer[100];
-    txtMetalSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
-
-    // Tentukan harga per kg berdasarkan subjenis
+// Fungsi untuk memproses hasil setoran berdasarkan subjenis kertas
+void processResultPaper(float newWeight, char *subtype) {
     float pricePerKg = 0;
-    if (strcmp(buffer, "seng") == 0) {
+
+    if (strcmp(subtype, "Arsip (hvs, buku)") == 0) {
+        pricePerKg = 1800;
+    } else if (strcmp(subtype, "Tetra Pack") == 0) {
+        pricePerKg = 300;
+    } else if (strcmp(subtype, "Kardus") == 0) {
+        pricePerKg = 1600;
+    } else if (strcmp(subtype, "Majalah/koran") == 0) {
+        pricePerKg = 500;
+    } else {
+        Serial.println("Subjenis kertas tidak ditemukan!");
+        return;
+    }
+
+    float totalPrice = newWeight * pricePerKg;
+    char itemBuffer[20], weightBuffer[10], totalBuffer[10];
+    sprintf(itemBuffer, "%s", subtype);
+    sprintf(weightBuffer, "%.2f kg", newWeight);
+    sprintf(totalBuffer, "Rp %.2f", totalPrice);
+
+    txtItem.setText(itemBuffer);
+    txtWeight.setText(weightBuffer);
+    txtTotal.setText(totalBuffer);
+
+    currentSaldo += totalPrice;
+    pageInfoSetoran.show();
+}
+
+
+// Fungsi untuk memproses hasil setoran berdasarkan subjenis logam
+void processResultMetal(float newWeight, char *subtype) {
+    float pricePerKg = 0;
+
+    if (strcmp(subtype, "Seng (kaleng)") == 0) {
         pricePerKg = 2000;
-    } else if (strcmp(buffer, "besi") == 0) {
+    } else if (strcmp(subtype, "Besi (paku, dll)") == 0) {
         pricePerKg = 3500;
-    } else if (strcmp(buffer, "aluminium") == 0) {
+    } else if (strcmp(subtype, "Aluminium") == 0) {
         pricePerKg = 10000;
-    } else if (strcmp(buffer, "tembaga") == 0) {
+    } else if (strcmp(subtype, "Tembaga (kawat)") == 0) {
         pricePerKg = 40000;
     } else {
         Serial.println("Subjenis logam tidak ditemukan!");
@@ -554,7 +565,7 @@ void processResultMetal(float newWeight) {
 
     // Tampilkan hasil di Nextion
     char itemBuffer[20], weightBuffer[10], totalBuffer[10];
-    sprintf(itemBuffer, "%s", "logam");
+    sprintf(itemBuffer, "%s", subtype);
     sprintf(weightBuffer, "%.2f kg", newWeight);
     sprintf(totalBuffer, "Rp %.2f", totalPrice);
 
@@ -571,19 +582,16 @@ void processResultMetal(float newWeight) {
 
 
 // Fungsi untuk memproses hasil setoran berdasarkan subjenis kaca
-void processResultGlass(float newWeight) {
-    char buffer[100];
-    txtGlassSubtype.getText(buffer, sizeof(buffer));  // Ambil teks subjenis dari Nextion
-
-    // Tentukan harga per kg berdasarkan subjenis
+void processResultGlass(float newWeight, char *subtype) {
     float pricePerKg = 0;
-    if (strcmp(buffer, "beling") == 0) {
+
+    if (strcmp(subtype, "Beling(pecahan)") == 0) {
         pricePerKg = 200;
-    } else if (strcmp(buffer, "botol kecap") == 0) {
+    } else if (strcmp(subtype, "Botol Kecap") == 0) {
         pricePerKg = 300;
-    } else if (strcmp(buffer, "botol utuh") == 0) {
+    } else if (strcmp(subtype, "Botol Utuh") == 0) {
         pricePerKg = 400;
-    } else if (strcmp(buffer, "botol hijau") == 0) {
+    } else if (strcmp(subtype, "Botol Hijau") == 0) {
         pricePerKg = 500;
     } else {
         Serial.println("Subjenis kaca tidak ditemukan!");
@@ -595,7 +603,7 @@ void processResultGlass(float newWeight) {
 
     // Tampilkan hasil di Nextion
     char itemBuffer[20], weightBuffer[10], totalBuffer[10];
-    sprintf(itemBuffer, "%s", "kaca");
+    sprintf(itemBuffer, "%s", subtype);
     sprintf(weightBuffer, "%.2f kg", newWeight);
     sprintf(totalBuffer, "Rp %.2f", totalPrice);
 
@@ -619,7 +627,7 @@ int detectItems(int trigPin, int echoPin) {
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  long duration = pulseIn(echoPin, HIGH);
+  long duration = pulseIn(echoPin, HIGH,20000);
   int distance = duration * 0.034 / 2; // Jarak dalam cm
 
   if (distance < 10) {  // Jika ada barang terdeteksi
@@ -629,9 +637,6 @@ int detectItems(int trigPin, int echoPin) {
 }
 
 
-
-
-
 /* --------------------
   PER CALL BACK AN
 ----------------------*/
@@ -639,30 +644,27 @@ int detectItems(int trigPin, int echoPin) {
 // Callback untuk tombol plastik
 void setorPlastikCallback(void *ptr) {
     Serial.println("Tombol Setor Plastik Ditekan");
-    processStorageA();  // Panggil fungsi penyetoran untuk plastik
 }
 
 // Callback untuk tombol kertas
 void setorKertasCallback(void *ptr) {
     Serial.println("Tombol Setor Kertas Ditekan");
-    processStorageB();  // Panggil fungsi penyetoran untuk kertas
 }
 
 // Callback untuk tombol logam
 void setorLogamCallback(void *ptr) {
     Serial.println("Tombol Setor Logam Ditekan");
-    processStorageC();  // Panggil fungsi penyetoran untuk logam
 }
 
 // Callback untuk tombol kaca
 void setorKacaCallback(void *ptr) {
     Serial.println("Tombol Setor Kaca Ditekan");
-    processStorageD();  // Panggil fungsi penyetoran untuk kaca
 }
 
 // Callback Selesai Setor untuk Tombol Selesai
 void selesaiSetorCallback(void *ptr) {
     // Semua servo kembali ke posisi 90 derajat setelah setoran selesai
+    Serial.println("Tombol Selesai Setor Ditekan");
     servoA.write(90);
     servoB.write(90);
     servoC.write(90);
@@ -675,6 +677,12 @@ void informasiSaldoCallback(void *ptr) {
     Serial.println("Tombol Informasi Saldo Ditekan");
     showSaldo();
     // Aksi untuk informasi saldo
+}
+
+// Fungsi yang dipanggil ketika tombol "Setor sampah" ditekan
+void setorSampahCallback(void *ptr) {
+    Serial.println("Tombol Setor Sampah Ditekan");
+    // Aksi untuk setor sampah
 }
 
 // Fungsi yang dipanggil ketika tombol "Tarik Tunai" ditekan
@@ -696,28 +704,32 @@ void konfirmasiTarikCallback(void *ptr) {
     Serial.println("Tombol Konfirmasi Tarik Ditekan");
     processTarikTunai();
     // Aksi untuk konfirmasi tarik tunai
+}
 
-
-// belum diedit
-
+// Tombol Stop di Halaman HOME
 void stopCallback(void *ptr) {
     Serial.println("Tombol Stop Ditekan");
     // Aksi untuk stop
 }
 
-void kembaliInfoSaldoCallback(void *ptr) {
-    Serial.println("Tombol Kembali Info Saldo Ditekan");
-    // Aksi untuk kembali dari info saldo
-}
-
+// Tombol OK di Tarik Tunai
 void okTarikCallback(void *ptr) {
     Serial.println("Tombol OK Tarik Ditekan");
     // Aksi untuk konfirmasi tarik
 }
 
+// Tombol Selesai di Tarik Tunai
 void selesaiTarikCallback(void *ptr) {
     Serial.println("Tombol Selesai Tarik Ditekan");
     // Aksi untuk selesai tarik tunai
+}
+
+/*--------------
+ Tombol KEMBALI
+---------------*/
+void kembaliInfoSaldoCallback(void *ptr) {
+    Serial.println("Tombol Kembali Info Saldo Ditekan");
+    // Aksi untuk kembali dari info saldo
 }
 
 void kembaliMutasiRekeningCallback(void *ptr) {
@@ -730,28 +742,7 @@ void kembaliSetorCallback(void *ptr) {
     // Aksi untuk kembali dari setoran sampah
 }
 
-
-
-void botolBeningCallback(void *ptr) {
-    Serial.println("Gambar Botol Bening Ditekan");
-    // Aksi untuk botol bening
-}
-
-void botolWarnaCallback(void *ptr) {
-    Serial.println("Gambar Botol Warna Ditekan");
-    // Aksi untuk botol warna
-}
-
-void plastikKemasanCallback(void *ptr) {
-    Serial.println("Gambar Plastik Kemasan Ditekan");
-    // Aksi untuk plastik kemasan
-}
-
-void tutupBotolCallback(void *ptr) {
-    Serial.println("Gambar Tutup Botol Ditekan");
-    // Aksi untuk tutup botol
-}
-
+// Tombol Kembali di Page Setor Sub Jenis
 void kembaliSetorPlastikCallback(void *ptr) {
     Serial.println("Tombol Kembali Setor Plastik Ditekan");
     // Aksi untuk kembali dari setor plastik
@@ -772,10 +763,133 @@ void kembaliSetorKacaCallback(void *ptr) {
     // Aksi untuk kembali dari setor kaca
 }
 
-void selesaiSetorCallback(void *ptr) {
-    Serial.println("Tombol Selesai Setor Ditekan");
-    // Aksi untuk selesai setoran
+/*-----------------------
+ Tombol Sub Jenis PLASTIK
+------------------------*/
+void botolBeningCallback(void *ptr) {
+    Serial.println("Gambar Botol Bening Ditekan");
+    char buffer[20];
+    txtBotolBening.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t2 di Nextion
+    processStorageA(buffer);  // Panggil fungsi untuk memproses hasil dengan teks yang diambil
 }
+
+void botolWarnaCallback(void *ptr) {
+    char buffer[20];
+    txtBotolWarna.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t4 di Nextion
+    processStorageA(buffer);
+}
+
+void plastikKemasanCallback(void *ptr) {
+    Serial.println("Gambar Plastik Kemasan Ditekan");
+    char buffer[20];
+    txtPlastikKemasan.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t6 di Nextion
+    processStorageA(buffer);
+}
+
+void tutupBotolCallback(void *ptr) {
+    Serial.println("Gambar Tutup Botol Ditekan");
+    char buffer[20];
+    txtTutupBotol.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t8 di Nextion
+    processStorageA(buffer);
+}
+
+/*-----------------------
+ Tombol Sub Jenis KERTAS
+------------------------*/
+void arsipCallback(void *ptr) {
+    Serial.println("Arsip Ditekan");
+    char buffer[20];
+    txtArsip.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t2 di Nextion
+    processStorageB(buffer);  // Panggil fungsi penyetoran dengan subjenis yang didapatkan dari Nextion
+}
+
+void tettraPackCallback(void *ptr) {
+    Serial.println("Tettra Pack Ditekan");
+    char buffer[20];
+    txtTettraPack.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t4 di Nextion
+    processStorageB(buffer);
+}
+
+void kardusCallback(void *ptr) {
+    Serial.println("Kardus Ditekan");
+    char buffer[20];
+    txtKardus.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t6 di Nextion
+    processStorageB(buffer);
+}
+
+void majalahCallback(void *ptr) {
+    Serial.println("Majalah Ditekan");
+    char buffer[20];
+    txtMajalah.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t8 di Nextion
+    processStorageB(buffer);
+}
+
+
+/*-----------------------
+ Tombol Sub Jenis LOGAM
+------------------------*/
+void sengCallback(void *ptr) {
+    Serial.println("Seng Ditekan");
+    char buffer[20];
+    txtSeng.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t2 di Nextion
+    processStorageC(buffer);  // Panggil fungsi penyetoran dengan subjenis yang didapatkan dari Nextion
+}
+
+void besiCallback(void *ptr) {
+    Serial.println("Besi Ditekan");
+    char buffer[20];
+    txtBesi.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t4 di Nextion
+    processStorageC(buffer);
+}
+
+void aluminiumCallback(void *ptr) {
+    Serial.println("Aluminium Ditekan");
+    char buffer[20];
+    txtAluminium.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t6 di Nextion
+    processStorageC(buffer);
+}
+
+void tembagaCallback(void *ptr) {
+    Serial.println("Tembaga Ditekan");
+    char buffer[20];
+    txtTembaga.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t8 di Nextion
+    processStorageC(buffer);
+}
+
+
+/*-----------------------
+ Tombol Sub Jenis KACA
+------------------------*/
+void belingCallback(void *ptr) {
+    Serial.println("Beling Ditekan");
+    char buffer[20];
+    txtBeling.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t2 di Nextion
+    processStorageD(buffer);  // Panggil fungsi penyetoran dengan subjenis yang didapatkan dari Nextion
+}
+
+void botolKecapCallback(void *ptr) {
+    Serial.println("Botol Kecap Ditekan");
+    char buffer[20];
+    txtBotolKecap.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t4 di Nextion
+    processStorageD(buffer);
+}
+
+void botolUtuhCallback(void *ptr) {
+    Serial.println("Botol Utuh Ditekan");
+    char buffer[20];
+    txtBotolUtuh.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t6 di Nextion
+    processStorageD(buffer);
+}
+
+void botolHijauCallback(void *ptr) {
+    Serial.println("Botol Hijau Ditekan");
+    char buffer[20];
+    txtBotolHijau.getText(buffer, sizeof(buffer));  // Ambil teks dari komponen t8 di Nextion
+    processStorageD(buffer);
+}
+
+
+
 
 void tidakCallback(void *ptr) {
     Serial.println("Tombol Tidak Ditekan");
@@ -846,6 +960,7 @@ void showSaldo() {
     http.end();
   } else {
     Serial.println("WiFi not connected");
+    txtSaldo.setText("WiFi Error");
   }
 
   // Pindah ke halaman info saldo di HMI
@@ -854,9 +969,9 @@ void showSaldo() {
 
 // Fungsi untuk memproses tarik tunai dan mengupdate saldo di database
 void processTarikTunai() {
-  char tarikBuffer[10];
-  txtInputTarik.getText(tarikBuffer, sizeof(tarikBuffer));
-  float amount = atof(tarikBuffer);  // Mengambil jumlah tarik tunai dari input pengguna
+  uint32_t numberValue;
+  numInputTarik.getValue(&numberValue);  // Mendapatkan nilai angka dari komponen Nextion "numInputTarik"
+  float amount = (float)numberValue;  // Konversi nilai menjadi tipe float untuk perhitungan
 
   if (amount > currentSaldo) {
     Serial.println("Saldo tidak cukup untuk tarik tunai");
@@ -874,6 +989,7 @@ void processTarikTunai() {
     }
   }
 }
+
 
 // Fungsi untuk memperbarui saldo di database (melalui HTTP POST)
 bool updateSaldoInDatabase(String rfid, float amount) {
@@ -943,7 +1059,7 @@ void showMutasiRekening() {
         }
 
         // Tampilkan mutasi di halaman mutasi_rekening HMI
-        txtMutasi.setText(mutasiText.c_str());
+        txtMutasiRekening.setText(mutasiText.c_str());
       } else {
         Serial.println("Error parsing JSON");
       }
@@ -956,6 +1072,7 @@ void showMutasiRekening() {
     http.end();
   } else {
     Serial.println("WiFi not connected");
+    txtMutasiRekening.setText("WiFi Error");
   }
 
   // Pindah ke halaman mutasi rekening di HMI
