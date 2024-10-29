@@ -1,44 +1,38 @@
 #include <Arduino.h>
-#include "HX711.h"
-#include <ESP32Servo.h>
+#include <Wire.h>
+
 #include <MFRC522.h>
 #include <SPI.h>
-#include <HardwareSerial.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <WiFiClientSecure.h>
 #include "ArduinoJson.h"
 #include <EasyNextionLibrary.h>  // Include Easy Nextion Library
 
-// Pin definitions
-#define SS_PIN 21
-#define RST_PIN 22
-#define TRIG_PIN_A 12
-#define ECHO_PIN_A 13
-#define TRIG_PIN_B 23
-#define ECHO_PIN_B 19
-#define TRIG_PIN_C 18
-#define ECHO_PIN_C 5  
-#define TRIG_PIN_D 2  
-#define ECHO_PIN_D 4
-#define SERVO_PIN_A 14
-#define SERVO_PIN_B 15
-#define SERVO_PIN_C 32
-#define SERVO_PIN_D 33
-#define LOADCELL_DOUT_PIN_A 34
-#define LOADCELL_SCK_PIN_A 35
-#define LOADCELL_DOUT_PIN_B 26
-#define LOADCELL_SCK_PIN_B 27
-#define LOADCELL_DOUT_PIN_C 25
-#define LOADCELL_SCK_PIN_C 33
-#define LOADCELL_DOUT_PIN_D 32
-#define LOADCELL_SCK_PIN_D 23 
+// I2C Address for ESP32 Slave
+#define I2C_ADDRESS 8
 
+// ===== PIN DEFINITIONS =====
+// rfid rc522
+#define SS_PIN 15
+#define RST_PIN 2
+// sck 18, miso 19, mosi 23
+
+// ultrasonic
+#define TRIG_PIN_A 4
+#define ECHO_PIN_A 5
+#define TRIG_PIN_B 13
+#define ECHO_PIN_B 12
+#define TRIG_PIN_C 14
+#define ECHO_PIN_C 27 
+#define TRIG_PIN_D 26 
+#define ECHO_PIN_D 25
+
+// nextion
 EasyNex myNex(Serial2); // pin 16 dan pin 17
 
 // ======== DEFINE LOADCELL, SERVO, RFID READER ========
-HX711 scaleA, scaleB, scaleC, scaleD;
-Servo servoA, servoB, servoC, servoD;
+//HX711 scaleA, scaleB, scaleC, scaleD;
+//Servo servoA, servoB, servoC, servoD;
 MFRC522 rfid(SS_PIN, RST_PIN);
 
 
@@ -46,20 +40,8 @@ const char* ssid = "FREE BASABASI";
 const char* password = "COKLATBANANA";
 
 // RFID Card Information
-struct Card {
-  String id;
-  String ownerName;
-  float saldo;
-};
-
-Card allowedCards[] = {
-  {"1234567890AB", "Alice", 430000},
-  {"0987654321CD", "Bob", 200000}
-};
-
-
 String cardID = "";  
-String currentOwner = "";
+String currentUser = "";
 String currentAlamat = "";
 int currentSaldo = 0;
 bool accessGranted = false;
@@ -68,11 +50,23 @@ bool accessGranted = false;
 float previousWeightA = 0, previousWeightB = 0, previousWeightC = 0, previousWeightD = 0;
 float currentWeightA = 0, currentWeightB = 0, currentWeightC = 0, currentWeightD = 0;
 float newWeightA = 0, newWeightB = 0, newWeightC = 0, newWeightD = 0;
+// Dari ESP32 Slave
+float storagePlastic = 0.0;
+float storagePaper = 0.0;
+float storageMetal = 0.0;
+float storageGlass = 0.0;
 
+// Fungsi pengganti halaman
+int currentPage = 0;
+void changePage(int page){
+  currentPage = page;
+  myNex.writeStr("page " + String(page));
+}
 
 // ======== SETUP =========
 void setup() {
   Serial.begin(115200);
+  Wire.begin(21, 22); // SDA (21), SCL (22) for I2C
   Serial2.begin(9600); 
   myNex.begin();
 
@@ -91,7 +85,7 @@ void setup() {
   SPI.begin();
   rfid.PCD_Init();
 
-  // Initialize Servos and Load Cells
+  /* Initialize Servos and Load Cells
   servoA.attach(SERVO_PIN_A);
   servoB.attach(SERVO_PIN_B);
   servoC.attach(SERVO_PIN_C);
@@ -115,7 +109,7 @@ void setup() {
   scaleA.tare();
   scaleB.tare();
   scaleC.tare();
-  scaleD.tare();
+  scaleD.tare(); */
 
   // Ultrasonic Sensor Setup
   pinMode(TRIG_PIN_A, OUTPUT);
@@ -130,7 +124,8 @@ void setup() {
   // Setup EasyNex
   changePage(0);  // Display the login page at startup
 }
-
+String currentSubType = "";
+String currentType = "";
 // ====================== LOOP ======================
 void loop() {
   myNex.NextionListen();  // Listen for Nextion events
@@ -162,6 +157,9 @@ void loop() {
     }
   }
 
+  // Update storage values based on load cell data ================================= NEW
+  updateStorageValues();
+
   int newPage = myNex.readNumber("dp");
   Serial.print(newPage);
   Serial.print(" ");
@@ -172,9 +170,9 @@ void loop() {
         Logout();
         break;
       case 2:
-        InfoSaldo();
+        infoSaldo();
         break;
-      case 3:
+      case 3:{
         int amount = myNex.readNumber("tarik_tunai.n0.val");
         int buttonPressed = myNex.readNumber("tarik_tunai.b4.val");
         Serial.print("\n " + String(buttonPressed) + " ");
@@ -183,125 +181,176 @@ void loop() {
           myNex.writeNum("tarik_tunai.b4.val", 0);
         }
         break;
-      case 5:
+      }
+      case 5:{
         mutasiRekening();
         break;
-      case 7:
+      }
+      case 7:{
+        currentType = "plastik";
         if (myNex.readNumber("setor_plastik.p0.val") == 1) {  // Botol Bening
             Serial.println("Gambar Botol Bening Ditekan");
-            String buffer = myNex.readString("setor_plastik.t2.txt");
-            processStorageA(buffer.c_str());
+            String buffer = myNex.readStr("setor_plastik.t2.txt");
+            currentSubType = buffer;
+            Wire.write(1);
             myNex.writeNum("setor_plastik.p0.val", 0);
         }
 
         if (myNex.readNumber("setor_plastik.p1.val") == 1) {  // Botol Warna
             Serial.println("Gambar Botol Warna Ditekan");
-            String buffer = myNex.readString("setor_plastik.t4.txt");
-            processStorageA(buffer.c_str());
+            String buffer = myNex.readStr("setor_plastik.t4.txt");
+            currentSubType = buffer;
+            Wire.write(1);
             myNex.writeNum("setor_plastik.p1.val", 0);
         }
 
         if (myNex.readNumber("setor_plastik.p2.val") == 1) {  // Plastik Kemasan
             Serial.println("Gambar Plastik Kemasan Ditekan");
-            String buffer = myNex.readString("setor_plastik.t6.txt");
-            processStorageA(buffer.c_str());
+            String buffer = myNex.readStr("setor_plastik.t6.txt");
+            currentSubType = buffer;
+            Wire.write(1);
             myNex.writeNum("setor_plastik.p2.val", 0);
         }
 
         if (myNex.readNumber("setor_plastik.p3.val") == 1) {  // Tutup Botol
             Serial.println("Gambar Tutup Botol Ditekan");
-            String buffer = myNex.readString("setor_plastik.t8.txt");
-            processStorageA(buffer.c_str());
+            String buffer = myNex.readStr("setor_plastik.t8.txt");
+            currentSubType = buffer;
+            Wire.write(1);
             myNex.writeNum("setor_plastik.p3.val", 0);
         }
         break;
-      case 8:
+      }
+      case 8:{
+        currentType = "kertas";
         if (myNex.readNumber("setor_kertas.p0.val") == 1) {  // Arsip
             Serial.println("Gambar Arsip Ditekan");
-            String buffer = myNex.readString("setor_kertas.t2.txt");
-            processStorageB(buffer.c_str());
+            String buffer = myNex.readStr("setor_kertas.t2.txt");
+            currentSubType = buffer;
+            Wire.write(2);
             myNex.writeNum("setor_kertas.p0.val", 0);
         }
 
         if (myNex.readNumber("setor_kertas.p1.val") == 1) {  // Tetra Pack
             Serial.println("Gambar Tetra Pack Ditekan");
-            String buffer = myNex.readString("setor_kertas.t4.txt");
-            processStorageB(buffer.c_str());
+            String buffer = myNex.readStr("setor_kertas.t4.txt");
+            currentSubType = buffer;
+            Wire.write(2);
             myNex.writeNum("setor_kertas.p1.val", 0);
         }
 
         if (myNex.readNumber("setor_kertas.p2.val") == 1) {  // Kardus
             Serial.println("Gambar Kardus Ditekan");
-            String buffer = myNex.readString("setor_kertas.t6.txt");
-            processStorageB(buffer.c_str());
+            String buffer = myNex.readStr("setor_kertas.t6.txt");
+            currentSubType = buffer;
+            Wire.write(2);
             myNex.writeNum("setor_kertas.p2.val", 0);
         }
 
         if (myNex.readNumber("setor_kertas.p3.val") == 1) {  // Majalah
             Serial.println("Gambar Majalah Ditekan");
-            String buffer = myNex.readString("setor_kertas.t8.txt");
-            processStorageB(buffer.c_str());
+            String buffer = myNex.readStr("setor_kertas.t8.txt");
+            currentSubType = buffer;
+            Wire.write(2);
             myNex.writeNum("setor_kertas.p3.val", 0);
         }
         break;
-      case 9:
+      }
+      case 9:{
+        currentType = "logam";
         if (myNex.readNumber("setor_logam.p0.val") == 1) {  // Seng
             Serial.println("Gambar Seng Ditekan");
-            String buffer = myNex.readString("setor_logam.t2.txt");
-            processStorageC(buffer.c_str());
+            String buffer = myNex.readStr("setor_logam.t2.txt");
+            currentSubType = buffer;
+            Wire.write(3);
             myNex.writeNum("setor_logam.p0.val", 0);
         }
 
         if (myNex.readNumber("setor_logam.p1.val") == 1) {  // Besi
             Serial.println("Gambar Besi Ditekan");
-            String buffer = myNex.readString("setor_logam.t4.txt");
-            processStorageC(buffer.c_str());
+            String buffer = myNex.readStr("setor_logam.t4.txt");
+            currentSubType = buffer;
+            Wire.write(3);
             myNex.writeNum("setor_logam.p1.val", 0);
         }
 
         if (myNex.readNumber("setor_logam.p2.val") == 1) {  // Aluminium
             Serial.println("Gambar Aluminium Ditekan");
-            String buffer = myNex.readString("setor_logam.t6.txt");
-            processStorageC(buffer.c_str());
+            String buffer = myNex.readStr("setor_logam.t6.txt");
+            currentSubType = buffer;
+            Wire.write(3);
             myNex.writeNum("setor_logam.p2.val", 0);
         }
 
         if (myNex.readNumber("setor_logam.p3.val") == 1) {  // Tembaga
             Serial.println("Gambar Tembaga Ditekan");
-            String buffer = myNex.readString("setor_logam.t8.txt");
-            processStorageC(buffer.c_str());
+            String buffer = myNex.readStr("setor_logam.t8.txt");
+            currentSubType = buffer;
+            Wire.write(3);
             myNex.writeNum("setor_logam.p3.val", 0);
         }
         break;
-      case 10:
+      }
+      case 10:{
+        currentType = "kaca";
         if (myNex.readNumber("setor_kaca.p0.val") == 1) {  // Beling
             Serial.println("Gambar Beling Ditekan");
-            String buffer = myNex.readString("setor_kaca.t2.txt");
-            processStorageD(buffer.c_str());
+            String buffer = myNex.readStr("setor_kaca.t2.txt");
+            currentSubType = buffer;
+            Wire.write(4);
             myNex.writeNum("setor_kaca.p0.val", 0);
         }
 
         if (myNex.readNumber("setor_kaca.p1.val") == 1) {  // Botol Kecap
             Serial.println("Gambar Botol Kecap Ditekan");
-            String buffer = myNex.readString("setor_kaca.t4.txt");
-            processStorageD(buffer.c_str());
+            String buffer = myNex.readStr("setor_kaca.t4.txt");
+            currentSubType = buffer;
+            Wire.write(4);
             myNex.writeNum("setor_kaca.p1.val", 0);
         }
 
         if (myNex.readNumber("setor_kaca.p2.val") == 1) {  // Botol Utuh
             Serial.println("Gambar Botol Utuh Ditekan");
-            String buffer = myNex.readString("setor_kaca.t6.txt");
-            processStorageD(buffer.c_str());
+            String buffer = myNex.readStr("setor_kaca.t6.txt");
+            currentSubType = buffer;
+            Wire.write(4);
             myNex.writeNum("setor_kaca.p2.val", 0);
         }
 
         if (myNex.readNumber("setor_kaca.p3.val") == 1) {  // Botol Hijau
             Serial.println("Gambar Botol Hijau Ditekan");
-            String buffer = myNex.readString("setor_kaca.t8.txt");
-            processStorageD(buffer.c_str());
+            String buffer = myNex.readStr("setor_kaca.t8.txt");
+            currentSubType = buffer;
+            Wire.write(4);
             myNex.writeNum("setor_kaca.p3.val", 0);
         }
         break;
+      case 11:
+        //updateStorageValues()
+        //if(detectItems()){
+          //jumlahBarang += 1;
+        //}
+        if (myNex.readNumber("konfirm_setor.b4.val") == 1){
+          if(currentType == "plastik"){
+            processStorageA(currentSubType);
+            Wire.write(5);
+          }
+          else if(currentType == "kertas"){
+            processStorageB(currentSubType);
+            Wire.write(6);
+          }
+          else if(currentType == "logam"){
+            processStorageC(currentSubType);
+            Wire.write(7);
+          }
+          else if(currentType == "kaca"){
+            processStorageD(currentSubType);
+            Wire.write(8);
+          }
+          myNex.writeNum("konfirm_setor.b4.val", 0);
+        }
+      }
+
     }
     currentPage = newPage;
   }
@@ -365,13 +414,6 @@ bool checkRFID() {
   return true;
 }
 
-// Fungsi pengganti halaman
-int currentPage = 0;
-void changePage(int page){
-  currentPage = page;
-  myNex.writeStr("page " + String(page));
-}
-
 // Log out
 void Logout(){
   accessGranted = false;
@@ -398,21 +440,23 @@ int detectItems(int trigPin, int echoPin) {
 
 // Functions to handle waste type selection
 void processStorageA(const String &subtype) {
-  if (detectItems(TRIG_PIN_A, ECHO_PIN_A) > 0) {
-    servoA.write(180);  // Open cover (180 degrees)
+  //if (detectItems(TRIG_PIN_A, ECHO_PIN_A) > 0) {
+    //servoA.write(180);  // Open cover (180 degrees)
+    //Wire.write(1); // Send a command to open(1 for open Plastic)
     delay(500);
-    currentWeightA = scaleA.get_units(10);
+    currentWeightA = storagePlastic;
     newWeightA = currentWeightA - previousWeightA;
     previousWeightA = currentWeightA;
     processResultPlastic(newWeightA, subtype);
-  }
+  //}
 }
 
 void processStorageB(const String &subtype) {
   if (detectItems(TRIG_PIN_B, ECHO_PIN_B) > 0) {
-    servoB.write(180);
+    //servoB.write(180);
+   // Wire.write(2); // Send a command to open
     delay(500);
-    currentWeightB = scaleB.get_units(10);
+    currentWeightB = storagePaper;
     newWeightB = currentWeightB - previousWeightB;
     previousWeightB = currentWeightB;
     processResultPaper(newWeightB, subtype);
@@ -421,9 +465,10 @@ void processStorageB(const String &subtype) {
 
 void processStorageC(const String &subtype) {
   if (detectItems(TRIG_PIN_C, ECHO_PIN_C) > 0) {
-    servoC.write(180);
+    //servoC.write(180);
+    //Wire.write(3); // Send a command to open
     delay(500);
-    currentWeightC = scaleC.get_units(10);
+    currentWeightC = storageMetal;
     newWeightC = currentWeightC - previousWeightC;
     previousWeightC = currentWeightC;
     processResultMetal(newWeightC, subtype);
@@ -432,9 +477,10 @@ void processStorageC(const String &subtype) {
 
 void processStorageD(const String &subtype) {
   if (detectItems(TRIG_PIN_D, ECHO_PIN_D) > 0) {
-    servoD.write(180);
+    //servoD.write(180);
+    //Wire.write(4); // Send a command to open
     delay(500);
-    currentWeightD = scaleD.get_units(10);
+    currentWeightD = storageGlass;
     newWeightD = currentWeightD - previousWeightD;
     previousWeightD = currentWeightD;
     processResultGlass(newWeightD, subtype);
@@ -456,8 +502,6 @@ void processResultPlastic(float newWeight, const String &subtype) {
   myNex.writeStr("info_setor.t4", String(newWeight, 2) + " kg");
   myNex.writeStr("info_setor.t5", "Rp " + String(totalPrice, 2));
 
-  currentSaldo += totalPrice;
-
   changePage(12);   // Display the result page
 }
 
@@ -474,8 +518,6 @@ void processResultPaper(float newWeight, const String &subtype) {
   myNex.writeStr("info_setor.t3", subtype);
   myNex.writeStr("info_setor.t4", String(newWeight, 2) + " kg");
   myNex.writeStr("info_setor.t5", "Rp " + String(totalPrice, 2));
-
-  currentSaldo += totalPrice;
 
   changePage(12);   // Display the result page
 }
@@ -494,8 +536,6 @@ void processResultMetal(float newWeight, const String &subtype) {
   myNex.writeStr("info_setor.t4", String(newWeight, 2) + " kg");
   myNex.writeStr("info_setor.t5", "Rp " + String(totalPrice, 2));
 
-  currentSaldo += totalPrice;
-
   changePage(12);   // Display the result page
 }
 
@@ -513,11 +553,8 @@ void processResultGlass(float newWeight, const String &subtype) {
   myNex.writeStr("info_setor.t4", String(newWeight, 2) + " kg");
   myNex.writeStr("info_setor.t5", "Rp " + String(totalPrice, 2));
 
-  currentSaldo += totalPrice;
-
   changePage(12);  // Display the result page
 }
-
 
 void infoSaldo() {
     myNex.writeStr("info_saldo.t1.txt", String(currentSaldo));
@@ -557,7 +594,7 @@ void tarikTunai(int amount) {
   }
 }
 
-// belum diedit
+// belum diedit============================================================
 void mutasiRekening() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
@@ -584,4 +621,5 @@ void mutasiRekening() {
   }
   myNex.writeStr("page mutasi");
 }
+
 
