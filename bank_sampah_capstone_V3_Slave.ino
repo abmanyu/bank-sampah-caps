@@ -1,5 +1,6 @@
+#include <Arduino.h>
 #include <Wire.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 #include "HX711.h"
 
 // I2C Address for ESP32 Slave
@@ -72,7 +73,7 @@ void setup() {
 void loop() {
   // Update load cell data periodically
   updateLoadCellData();
-  delay(1000); // Adjust delay as necessary
+  delay(3000); // Adjust delay as necessary
 }
 
 // Function to update load cell data
@@ -89,12 +90,14 @@ void updateLoadCellData() {
     Serial.print(": ");
     Serial.println(loadCellData[i]);
   }
+  Serial.print("\n");
 }
 
 // This function is called whenever I2C data is received
 void receiveEvent(int bytes) {
   if (Wire.available()) {
     int command = Wire.read(); // Read the command sent by ESP32 Master
+    Serial.println("command :" + String(command));
 
     // Process the command and move the corresponding servo
     switch (command) {
